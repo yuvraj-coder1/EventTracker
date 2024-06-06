@@ -3,8 +3,12 @@ package com.example.eventtracker.ui.postNewEvent
 import android.annotation.SuppressLint
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import android.net.Uri
 import android.widget.DatePicker
 import android.widget.TimePicker
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -14,7 +18,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -53,27 +59,33 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.example.eventtracker.R
 import com.example.eventtracker.ui.theme.EventTrackerTheme
+import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.Calendar
 import java.util.Date
 
 @Composable
 fun PostNewEventScreen(modifier: Modifier = Modifier) {
-    val viewModel: PostNewEventViewModel = viewModel()
+    val viewModel: PostNewEventViewModel = hiltViewModel()
     val uiState by viewModel.uiState.collectAsState()
-    Scaffold(topBar = { PostNewEventScreenTopBar() }) {
-        PostNewEventBody(modifier = Modifier.padding(it), uiState = uiState, viewModel = viewModel)
-    }
+    PostNewEventBody(modifier = Modifier.padding(), uiState = uiState, viewModel = viewModel)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PostNewEventScreenTopBar(modifier: Modifier = Modifier) {
+fun PostNewEventScreenTopBar(modifier: Modifier = Modifier, onClickAction:()->Unit= {}) {
     CenterAlignedTopAppBar(
         title = { Text("New Event") },
-        navigationIcon = { Icon(imageVector = Icons.Default.Close, contentDescription = "Close") }
+        navigationIcon = {
+            Icon(
+                imageVector = Icons.Default.Close,
+                contentDescription = "Close",
+                modifier = Modifier.clickable { onClickAction() })
+        }
     )
 }
 
@@ -83,10 +95,18 @@ fun PostNewEventBody(
     viewModel: PostNewEventViewModel = viewModel(),
     uiState: PostNewEventUiState
 ) {
+
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    viewModel.uri = selectedImageUri
+    val singleImagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+        onResult = { uri -> selectedImageUri = uri }
+    )
     Column(
         modifier = modifier
             .fillMaxWidth()
             .padding(16.dp)
+            .verticalScroll(rememberScrollState())
     ) {
         OutlinedTextField(
             value = uiState.eventName,
@@ -138,13 +158,17 @@ fun PostNewEventBody(
                 ),
             singleLine = true
         )
-        val date = pickDate()
-        val time = timePickerDemo()
+        var date by rememberSaveable { mutableStateOf("")}
+        date = pickDate()
+        viewModel.updateEventDate(date)
+        var time by rememberSaveable { mutableStateOf("")}
+        time = timePickerDemo()
+        viewModel.updateEventTime(time)
         OutlinedTextField(
             value = uiState.location,
             onValueChange = { viewModel.updateLocation(it) },
             shape = RoundedCornerShape(8.dp),
-            label = { Text("Choose Time", color = Color.Gray) },
+            label = { Text("Location", color = Color.Gray) },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp),
@@ -161,9 +185,25 @@ fun PostNewEventBody(
                     contentDescription = "Choose Location"
                 )
             },
+
         )
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = { singleImagePickerLauncher.launch(PickVisualMediaRequest(
+            ActivityResultContracts.PickVisualMedia.ImageOnly
+        )) }) {
+            Text(text = "Add Image")
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        AsyncImage(
+            model = viewModel.uri,
+            contentDescription = "Selected Image",
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+        )
+        Spacer(modifier = Modifier.height(16.dp))
         Button(
-            onClick = { /*TODO*/ },
+            onClick = { viewModel.addEventToDatabase() },
             modifier = Modifier.fillMaxWidth(),
             shape = MaterialTheme.shapes.small,
             colors = ButtonDefaults.buttonColors(Color(13, 125, 242))
@@ -302,9 +342,9 @@ fun timePickerDemo(): String {
     val minute = calendar.get(Calendar.MINUTE)
     val timePickerDialog = TimePickerDialog(
         context,
-        { _: TimePicker, selectedHour: Int, selectedMinute: Int,  ->
+        { _: TimePicker, selectedHour: Int, selectedMinute: Int ->
             val amPM = if (selectedHour >= 12) "PM" else "AM"
-            time = String.format("%02d:%02d $amPM", selectedHour%13, selectedMinute)
+            time = String.format("%02d:%02d $amPM", selectedHour % 13, selectedMinute)
         },
         hour,
         minute,
@@ -332,7 +372,7 @@ fun timePickerDemo(): String {
             unfocusedPlaceholderColor = Color.Gray,
             disabledTextColor = Color.Black
 
-            ),
+        ),
         trailingIcon = {
             Icon(
                 imageVector = Icons.Default.AccessTime,

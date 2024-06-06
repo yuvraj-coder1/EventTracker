@@ -1,6 +1,6 @@
 package com.example.eventtracker.ui.home
 
-import android.service.autofill.OnClickAction
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -21,9 +21,10 @@ import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,26 +34,22 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.example.eventtracker.R
 import com.example.eventtracker.model.EventData
+import com.example.eventtracker.ui.navigation.EventDetailsScreen
 import com.example.eventtracker.ui.theme.EventTrackerTheme
 
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier) {
-    val viewModel: HomeScreenViewModel = viewModel()
-    Scaffold(
-        modifier = modifier,
-        topBar = { HomeScreenTopBar() }
-    ) {
-        HomeBody(modifier = Modifier.padding(it), viewModel = viewModel)
-    }
+fun HomeScreen(modifier: Modifier = Modifier, onEventClick: (EventData) -> Unit) {
+    val viewModel: HomeScreenViewModel = hiltViewModel()
+    HomeBody(modifier = modifier, viewModel = viewModel, onEventClick = onEventClick)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreenTopBar(modifier: Modifier = Modifier) {
+fun HomeScreenTopBar(modifier: Modifier = Modifier,onClickAction: () -> Unit) {
     CenterAlignedTopAppBar(
         title = { Text(text = "Events", fontWeight = FontWeight.Bold) },
         navigationIcon = {
@@ -64,22 +61,27 @@ fun HomeScreenTopBar(modifier: Modifier = Modifier) {
         actions = {
             Icon(
                 imageVector = Icons.Default.Notifications,
-                contentDescription = "Notifications"
+                contentDescription = "Notifications",
+                modifier = Modifier.clickable { onClickAction() }
             )
         })
 }
 
 @Composable
-fun HomeBody(modifier: Modifier = Modifier, viewModel: HomeScreenViewModel) {
+fun HomeBody(
+    modifier: Modifier = Modifier,
+    viewModel: HomeScreenViewModel,
+    onEventClick: (EventData) -> Unit
+) {
     Column(modifier = modifier.padding(horizontal = 16.dp)) {
         SelectDateRangePreferenceBar()
         Spacer(modifier = Modifier.height(16.dp))
-        EventList(eventList = viewModel.eventList)
+        EventList(eventList = viewModel.eventList.collectAsState().value, onEventClick = onEventClick)
     }
 }
 
 @Composable
-fun EventList(modifier: Modifier = Modifier, eventList: List<EventData>) {
+fun EventList(modifier: Modifier = Modifier, eventList: List<EventData>, onEventClick: (EventData) -> Unit) {
     LazyColumn(modifier = modifier) {
         itemsIndexed(eventList) { index, item ->
             EventListItem(
@@ -91,7 +93,9 @@ fun EventList(modifier: Modifier = Modifier, eventList: List<EventData>) {
                 eventLocation = item.location,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp)
+                    .padding(vertical = 8.dp),
+                onClickAction = onEventClick,
+                event = item
             )
         }
     }
@@ -104,20 +108,22 @@ fun EventListItem(
     eventTitle: String,
     eventDescription: String,
     eventDate: String,
-    onClickAction: () -> Unit = {},
+    onClickAction: (EventData) -> Unit = {},
     eventTime: String,
     eventLocation: String,
-    onInterestedAction: () -> Unit = {}
+    onInterestedAction: () -> Unit = {},
+    event:EventData
 ) {
-    Column(modifier = modifier) {
+    Column(modifier = modifier.clickable { onClickAction(event) }) {
         AsyncImage(
-            model = null,
+            model = eventImage,
             error = painterResource(id = R.drawable.default_image),
             contentDescription = "Event Image",
             contentScale = ContentScale.Crop,
             modifier = Modifier
                 .clip(MaterialTheme.shapes.medium)
                 .fillMaxWidth()
+                .height(300.dp)
         )
     }
     Spacer(modifier = Modifier.height(16.dp))
@@ -158,7 +164,7 @@ fun SelectDateRangePreferenceBarItem(
     Button(
         onClick = onClickAction,
         modifier = modifier.padding(horizontal = 8.dp),
-        colors = ButtonDefaults.buttonColors(Color.LightGray),
+        colors = ButtonDefaults.buttonColors(Color(176, 183, 192, 70)),
         shape = MaterialTheme.shapes.large
     ) {
         Text(text = text, color = Color.Black)
@@ -169,6 +175,6 @@ fun SelectDateRangePreferenceBarItem(
 @Composable
 fun HomeScreenPreview(modifier: Modifier = Modifier) {
     EventTrackerTheme {
-        HomeScreen()
+
     }
 }

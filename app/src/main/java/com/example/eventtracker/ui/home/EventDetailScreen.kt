@@ -46,9 +46,8 @@ import com.example.eventtracker.ui.theme.EventTrackerTheme
 
 @Composable
 fun EventDetailScreen(modifier: Modifier = Modifier, event: EventData) {
-    Scaffold(topBar = { EventDetailScreenTopBar() }) {
-        EventDetailScreenContent(modifier = Modifier.padding(it), event = event)
-    }
+
+    EventDetailScreenContent(modifier = Modifier.padding(), event = event)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -78,87 +77,82 @@ fun EventDetailScreenContent(modifier: Modifier = Modifier, event: EventData) {
         modifier = modifier
             .verticalScroll(rememberScrollState())
     ) {
-        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-            Box(
+            AsyncImage(
+                model = event.image,
+                error = painterResource(id = R.drawable.default_image),
+                contentDescription = null,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Column(
                 modifier = Modifier
-                    .width(maxWidth)
+                    .fillMaxWidth()
+                    .padding(16.dp)
             ) {
-                AsyncImage(
-                    model = event.image,
-                    error = painterResource(id = R.drawable.default_image),
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxWidth(),
-                    contentScale = ContentScale.Crop
+                Text(
+                    text = event.name,
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleLarge
                 )
-            }
-        }
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Text(
-                text = event.name,
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.titleLarge
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "${event.date}, ${event.time}",
-                modifier = Modifier
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(modifier = Modifier.fillMaxWidth()) {
-                Icon(
-                    imageVector = Icons.Outlined.LocationOn,
-                    contentDescription = "Event Location",
-                    tint = Color.Black,
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "${event.date}, ${event.time}",
                     modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(Color(211, 211, 211, 130))
-                        .padding(4.dp)
-
                 )
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    Icon(
+                        imageVector = Icons.Outlined.LocationOn,
+                        contentDescription = "Event Location",
+                        tint = Color.Black,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(176, 183, 192, 70))
+                            .padding(4.dp)
 
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(text = event.location, modifier = Modifier.weight(1f))
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Button(
-                    onClick = { /*TODO*/ },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(Color(211, 211, 211, 130))
-                ) {
-                    Text(text = "Save", color = Color.Black, fontWeight = FontWeight.SemiBold)
+                    )
+
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(text = event.location, modifier = Modifier.weight(1f))
                 }
-                Button(
-                    onClick = { /*TODO*/ },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(Color(13, 125, 242))
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Text(text = "Attend", fontWeight = FontWeight.SemiBold)
+                    Button(
+                        onClick = { /*TODO*/ },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(Color(176, 183, 192, 70)),
+                    ) {
+                        Text(text = "Save", color = Color.Black, fontWeight = FontWeight.SemiBold)
+                    }
+                    Button(
+                        onClick = { /*TODO*/ },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(Color(13, 125, 242))
+                    ) {
+                        Text(text = "Attend", fontWeight = FontWeight.SemiBold)
+                    }
                 }
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "About the Event",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(text = event.description)
             }
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "About the Event",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = event.description)
         }
     }
-}
 
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun EventDetailScreenPreview(modifier: Modifier = Modifier) {
-    EventTrackerTheme {
-        EventDetailScreen(event = EventData())
+    @Preview(showBackground = true, showSystemUi = true)
+    @Composable
+    fun EventDetailScreenPreview(modifier: Modifier = Modifier) {
+        EventTrackerTheme {
+            EventDetailScreen(event = EventData())
+        }
     }
-}
 
 
 

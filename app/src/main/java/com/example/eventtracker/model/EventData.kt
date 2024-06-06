@@ -6,5 +6,6 @@ data class EventData(
     val date:String = "20/05/2024",
     val time:String = "10:00 AM",
     val location:String = "Av Auditorium,DSCE",
-    val description:String = "THis is the description of the event"
+    val description:String = "THis is the description of the event",
+    val category:String = "Technical",
 )
