@@ -11,6 +11,7 @@ import androidx.navigation.toRoute
 import com.example.eventtracker.model.EventData
 import com.example.eventtracker.ui.home.EventDetailScreen
 import com.example.eventtracker.ui.home.HomeScreen
+import com.example.eventtracker.ui.home.HomeScreenViewModel
 import com.example.eventtracker.ui.postNewEvent.PostNewEventScreen
 import com.example.eventtracker.ui.profile.ProfileScreen
 
@@ -19,6 +20,7 @@ fun EventTrackerApp(
     modifier: Modifier = Modifier,
     navController: NavHostController,
     onBottomBarVisibilityChanged: (Boolean) -> Unit,
+    homeScreenViewModel: HomeScreenViewModel
 ) {
     val scope = rememberCoroutineScope()
     NavHost(
@@ -38,7 +40,8 @@ fun EventTrackerApp(
                     time = it.time,
                     image = it.image,
                     category = it.category
-                )) }
+                )) },
+                viewModel = homeScreenViewModel
             )
         }
         composable<EventDetailsScreen> {

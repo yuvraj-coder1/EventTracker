@@ -20,6 +20,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
@@ -54,8 +56,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -123,6 +127,7 @@ fun PostNewEventBody(
                 focusedContainerColor = Color(176, 183, 192, 70),
 
                 ),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
         )
         OutlinedTextField(
             value = uiState.eventDescription,
@@ -139,7 +144,8 @@ fun PostNewEventBody(
                 focusedContainerColor = Color(176, 183, 192, 70),
 
                 ),
-            minLines = 7
+            minLines = 7,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
         )
         OutlinedTextField(
             value = uiState.eventCategory,
@@ -156,13 +162,15 @@ fun PostNewEventBody(
                 focusedContainerColor = Color(176, 183, 192, 70),
 
                 ),
-            singleLine = true
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
         )
         var date by rememberSaveable { mutableStateOf("")}
         date = pickDate()
         viewModel.updateEventDate(date)
         var time by rememberSaveable { mutableStateOf("")}
         time = timePickerDemo()
+        val focusManager = LocalFocusManager.current
         viewModel.updateEventTime(time)
         OutlinedTextField(
             value = uiState.location,
@@ -185,7 +193,10 @@ fun PostNewEventBody(
                     contentDescription = "Choose Location"
                 )
             },
-
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = {
+            focusManager.clearFocus()
+            })
         )
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = { singleImagePickerLauncher.launch(PickVisualMediaRequest(
@@ -214,6 +225,7 @@ fun PostNewEventBody(
 
 
 }
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

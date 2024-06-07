@@ -3,9 +3,11 @@ package com.example.eventtracker.ui.home
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -13,15 +15,17 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
@@ -34,37 +38,73 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.eventtracker.R
 import com.example.eventtracker.model.EventData
-import com.example.eventtracker.ui.navigation.EventDetailsScreen
 import com.example.eventtracker.ui.theme.EventTrackerTheme
 
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier, onEventClick: (EventData) -> Unit) {
-    val viewModel: HomeScreenViewModel = hiltViewModel()
+fun HomeScreen(
+    modifier: Modifier = Modifier,
+    onEventClick: (EventData) -> Unit,
+    viewModel: HomeScreenViewModel
+) {
+
     HomeBody(modifier = modifier, viewModel = viewModel, onEventClick = onEventClick)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreenTopBar(modifier: Modifier = Modifier,onClickAction: () -> Unit) {
-    CenterAlignedTopAppBar(
-        title = { Text(text = "Events", fontWeight = FontWeight.Bold) },
-        navigationIcon = {
-            Icon(
-                imageVector = Icons.Default.Search,
-                contentDescription = "Search events"
+fun HomeScreenTopBar(
+    modifier: Modifier = Modifier,
+    onClickAction: () -> Unit,
+    viewModel: HomeScreenViewModel
+) {
+    val isSearchOn: State<Boolean> = viewModel.isSearchOn.collectAsState()
+    val searchQuery: State<String> = viewModel.searchQuery.collectAsState()
+
+    if (isSearchOn.value) {
+        CenterAlignedTopAppBar(title = {
+            TextField(value = searchQuery.value, onValueChange = {
+                viewModel.updateSearchQuery(
+                    it
+                )
+            }, modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text(text = "Search events") },
+                singleLine = true,
+                trailingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Search events",
+                        modifier = Modifier.clickable { viewModel.toggleSearch() }
+                    )
+                }
             )
         },
-        actions = {
-            Icon(
-                imageVector = Icons.Default.Notifications,
-                contentDescription = "Notifications",
-                modifier = Modifier.clickable { onClickAction() }
-            )
-        })
+        )
+    } else {
+        CenterAlignedTopAppBar(
+            title = { Text(text = "Events", fontWeight = FontWeight.Bold) },
+            navigationIcon = {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = "Search events",
+                    modifier = Modifier.clickable { viewModel.toggleSearch() }
+                )
+            },
+            actions = {
+                Icon(
+                    imageVector = Icons.Outlined.Notifications,
+                    contentDescription = "Notifications",
+                    modifier = Modifier.clickable { onClickAction() }
+                )
+            },
+            modifier = modifier.padding(horizontal = 16.dp)
+        )
+    }
+// TopAppBar
+
 }
 
 @Composable
@@ -74,14 +114,42 @@ fun HomeBody(
     onEventClick: (EventData) -> Unit
 ) {
     Column(modifier = modifier.padding(horizontal = 16.dp)) {
+
+         if(viewModel.isSearchOn.collectAsState().value)
+            Spacer(modifier = Modifier.height(16.dp))
         SelectDateRangePreferenceBar()
         Spacer(modifier = Modifier.height(16.dp))
-        EventList(eventList = viewModel.eventList.collectAsState().value, onEventClick = onEventClick)
+        if(viewModel.isSearching.collectAsState().value)
+        {
+            Box(modifier = Modifier.fillMaxSize()) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            }
+        }
+        else
+        {
+            Text(
+                text = "Showing Results for",
+                fontWeight = FontWeight.Bold,
+                color = Color.Gray,
+                modifier = Modifier.padding(start = 4.dp),
+                fontSize = 18.sp
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            EventList(
+                eventList = viewModel.eventList.collectAsState().value,
+                onEventClick = onEventClick
+            )
+        }
+
     }
 }
 
 @Composable
-fun EventList(modifier: Modifier = Modifier, eventList: List<EventData>, onEventClick: (EventData) -> Unit) {
+fun EventList(
+    modifier: Modifier = Modifier,
+    eventList: List<EventData>,
+    onEventClick: (EventData) -> Unit
+) {
     LazyColumn(modifier = modifier) {
         itemsIndexed(eventList) { index, item ->
             EventListItem(
@@ -112,7 +180,7 @@ fun EventListItem(
     eventTime: String,
     eventLocation: String,
     onInterestedAction: () -> Unit = {},
-    event:EventData
+    event: EventData
 ) {
     Column(modifier = modifier.clickable { onClickAction(event) }) {
         AsyncImage(

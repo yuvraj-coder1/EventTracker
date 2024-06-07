@@ -16,12 +16,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.eventtracker.ui.bottomBar.BottomBar
 import com.example.eventtracker.ui.home.EventDetailScreen
 import com.example.eventtracker.ui.home.EventDetailScreenTopBar
 import com.example.eventtracker.ui.home.HomeScreenTopBar
+import com.example.eventtracker.ui.home.HomeScreenViewModel
 import com.example.eventtracker.ui.navigation.EventDetailsScreen
 import com.example.eventtracker.ui.navigation.EventTrackerApp
 import com.example.eventtracker.ui.navigation.HomeScreen
@@ -39,6 +41,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             EventTrackerTheme {
+                val homeScreenViewModel: HomeScreenViewModel = hiltViewModel()
                 val navController = rememberNavController()
                 var buttonsVisible by remember { mutableStateOf(false) }
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -65,7 +68,11 @@ class MainActivity : ComponentActivity() {
                     topBar = {
                         when (navBackStackEntry?.destination?.route) {
 
-                            pathString + HomeScreen.toString() -> HomeScreenTopBar(onClickAction = {})
+                            pathString + HomeScreen.toString() -> HomeScreenTopBar(
+                                onClickAction = {},
+                                viewModel = homeScreenViewModel
+                            )
+
                             eventDetailScreenPath -> EventDetailScreenTopBar()
                             pathString + PostEventScreen.toString() -> PostNewEventScreenTopBar(
                                 onClickAction = { navController.navigateUp() })
@@ -82,6 +89,7 @@ class MainActivity : ComponentActivity() {
                         navController = navController,
                         modifier = Modifier.padding(innerPadding),
                         onBottomBarVisibilityChanged = { buttonsVisible = it },
+                        homeScreenViewModel = homeScreenViewModel
                     )
                 }
             }
