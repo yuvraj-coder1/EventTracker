@@ -23,3 +23,9 @@ data object ProfileScreen
 
 @Serializable
 data object PostEventScreen
+
+@Serializable
+data object LogInScreen
+
+@Serializable
+data object UserEventsScreen

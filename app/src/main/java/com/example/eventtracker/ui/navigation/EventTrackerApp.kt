@@ -14,33 +14,48 @@ import com.example.eventtracker.ui.home.HomeScreen
 import com.example.eventtracker.ui.home.HomeScreenViewModel
 import com.example.eventtracker.ui.postNewEvent.PostNewEventScreen
 import com.example.eventtracker.ui.profile.ProfileScreen
+import com.example.eventtracker.ui.signIn.SignInScreen
+import com.example.eventtracker.ui.signIn.SignInViewModel
+import com.example.eventtracker.ui.userEventsScreen.UserEventsScreen
 
 @Composable
 fun EventTrackerApp(
     modifier: Modifier = Modifier,
     navController: NavHostController,
     onBottomBarVisibilityChanged: (Boolean) -> Unit,
-    homeScreenViewModel: HomeScreenViewModel
+    homeScreenViewModel: HomeScreenViewModel,
+    signInViewModel: SignInViewModel
 ) {
     val scope = rememberCoroutineScope()
     NavHost(
         navController = navController,
-        startDestination = HomeScreen,
+        startDestination = LogInScreen,
         modifier = modifier
     ) {
+        composable<LogInScreen> {
+            onBottomBarVisibilityChanged(false)
+            SignInScreen(
+                viewModel = signInViewModel,
+                navigateToHome = { navController.navigate(HomeScreen) })
+        }
+
         composable<HomeScreen> {
             onBottomBarVisibilityChanged(true)
             com.example.eventtracker.ui.home.HomeScreen(
 
-                onEventClick = { navController.navigate(EventDetailsScreen(
-                    name = it.name,
-                    description = it.description,
-                    date = it.date,
-                    location = it.location,
-                    time = it.time,
-                    image = it.image,
-                    category = it.category
-                )) },
+                onEventClick = {
+                    navController.navigate(
+                        EventDetailsScreen(
+                            name = it.name,
+                            description = it.description,
+                            date = it.date,
+                            location = it.location,
+                            time = it.time,
+                            image = it.image,
+                            category = it.category
+                        )
+                    )
+                },
                 viewModel = homeScreenViewModel
             )
         }
@@ -65,8 +80,28 @@ fun EventTrackerApp(
             com.example.eventtracker.ui.profile.ProfileScreen(name = "Yash Aggarwal")
         }
         composable<PostEventScreen> {
-            onBottomBarVisibilityChanged(false)
-            PostNewEventScreen()
+            onBottomBarVisibilityChanged(true)
+            PostNewEventScreen(getEvents = { homeScreenViewModel.getEvents() })
         }
+
+        composable<UserEventsScreen> {
+            onBottomBarVisibilityChanged(true)
+            UserEventsScreen(
+                onEventClick = {
+                    navController.navigate(
+                        EventDetailsScreen(
+                            name = it.name,
+                            description = it.description,
+                            date = it.date,
+                            location = it.location,
+                            time = it.time,
+                            image = it.image,
+                            category = it.category
+                        )
+                    )
+                },
+            )
+        }
+
     }
 }

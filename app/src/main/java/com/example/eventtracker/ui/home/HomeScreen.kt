@@ -1,5 +1,7 @@
 package com.example.eventtracker.ui.home
 
+import android.util.Log
+import androidx.compose.animation.VectorConverter
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -27,13 +29,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -43,6 +52,10 @@ import coil.compose.AsyncImage
 import com.example.eventtracker.R
 import com.example.eventtracker.model.EventData
 import com.example.eventtracker.ui.theme.EventTrackerTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlin.reflect.KFunction2
 
 @Composable
 fun HomeScreen(
@@ -65,23 +78,24 @@ fun HomeScreenTopBar(
     val searchQuery: State<String> = viewModel.searchQuery.collectAsState()
 
     if (isSearchOn.value) {
-        CenterAlignedTopAppBar(title = {
-            TextField(value = searchQuery.value, onValueChange = {
-                viewModel.updateSearchQuery(
-                    it
-                )
-            }, modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text(text = "Search events") },
-                singleLine = true,
-                trailingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Search events",
-                        modifier = Modifier.clickable { viewModel.toggleSearch() }
+        CenterAlignedTopAppBar(
+            title = {
+                TextField(value = searchQuery.value, onValueChange = {
+                    viewModel.updateSearchQuery(
+                        it
                     )
-                }
-            )
-        },
+                }, modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text(text = "Search events") },
+                    singleLine = true,
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Search events",
+                            modifier = Modifier.clickable { viewModel.toggleSearch() }
+                        )
+                    }
+                )
+            },
         )
     } else {
         CenterAlignedTopAppBar(
@@ -115,18 +129,15 @@ fun HomeBody(
 ) {
     Column(modifier = modifier.padding(horizontal = 16.dp)) {
 
-         if(viewModel.isSearchOn.collectAsState().value)
+        if (viewModel.isSearchOn.collectAsState().value)
             Spacer(modifier = Modifier.height(16.dp))
         SelectDateRangePreferenceBar()
         Spacer(modifier = Modifier.height(16.dp))
-        if(viewModel.isSearching.collectAsState().value)
-        {
+        if (viewModel.isSearching.collectAsState().value) {
             Box(modifier = Modifier.fillMaxSize()) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             }
-        }
-        else
-        {
+        } else {
             Text(
                 text = "Showing Results for",
                 fontWeight = FontWeight.Bold,
@@ -137,7 +148,9 @@ fun HomeBody(
             Spacer(modifier = Modifier.height(16.dp))
             EventList(
                 eventList = viewModel.eventList.collectAsState().value,
-                onEventClick = onEventClick
+                onEventClick = onEventClick,
+                onInterestedAction = viewModel::onInterestedClicked,
+                checkIfBookmarked = viewModel::checkIfBookmarked
             )
         }
 
@@ -148,7 +161,9 @@ fun HomeBody(
 fun EventList(
     modifier: Modifier = Modifier,
     eventList: List<EventData>,
-    onEventClick: (EventData) -> Unit
+    onEventClick: (EventData) -> Unit,
+    onInterestedAction: suspend (EventData, Boolean) -> Boolean,
+    checkIfBookmarked: (event: EventData) -> Boolean
 ) {
     LazyColumn(modifier = modifier) {
         itemsIndexed(eventList) { index, item ->
@@ -163,7 +178,9 @@ fun EventList(
                     .fillMaxWidth()
                     .padding(vertical = 8.dp),
                 onClickAction = onEventClick,
-                event = item
+                event = item,
+                onInterestedAction = onInterestedAction,
+                checkIfBookmarked = checkIfBookmarked
             )
         }
     }
@@ -179,9 +196,12 @@ fun EventListItem(
     onClickAction: (EventData) -> Unit = {},
     eventTime: String,
     eventLocation: String,
-    onInterestedAction: () -> Unit = {},
-    event: EventData
+    onInterestedAction: suspend (EventData, Boolean) -> Boolean,
+    event: EventData,
+    checkIfBookmarked: (event: EventData) -> Boolean = { false }
 ) {
+    var isBookmarked by rememberSaveable { mutableStateOf(checkIfBookmarked(event)) }
+//    isBookmarked = checkIfBookmarked(event)
     Column(modifier = modifier.clickable { onClickAction(event) }) {
         AsyncImage(
             model = eventImage,
@@ -205,8 +225,32 @@ fun EventListItem(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(text = eventLocation)
-        Button(onClick = { /*TODO*/ }) {
-            Text(text = "Interested")
+        Button(
+            onClick =
+            {
+                CoroutineScope(Dispatchers.IO).launch {
+                    isBookmarked =  onInterestedAction(event, isBookmarked)
+                }
+                    // Update state after Firebase task}
+                    //               isBookmarked =  onInterestedAction(event, isBookmarked)
+                    //                Log.d("isBookmarked", isBookmarked.toString())
+            },
+
+            colors = ButtonDefaults.buttonColors(
+                if (isBookmarked)
+                    Color(
+                        176,
+                        183,
+                        192,
+                        70
+                    ) else Color.Unspecified
+            )
+        ) {
+
+            Text(
+                text = if (isBookmarked) "Unbookmark" else "Bookmark",
+                color = if (isBookmarked) Color.Gray else Color.White
+            )
         }
     }
     Spacer(modifier = Modifier.height(16.dp))

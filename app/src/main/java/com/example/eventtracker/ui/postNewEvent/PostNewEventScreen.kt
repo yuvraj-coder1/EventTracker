@@ -6,6 +6,7 @@ import android.app.TimePickerDialog
 import android.net.Uri
 import android.widget.DatePicker
 import android.widget.TimePicker
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -73,22 +74,27 @@ import java.util.Calendar
 import java.util.Date
 
 @Composable
-fun PostNewEventScreen(modifier: Modifier = Modifier) {
+fun PostNewEventScreen(modifier: Modifier = Modifier, getEvents: () -> Unit) {
     val viewModel: PostNewEventViewModel = hiltViewModel()
     val uiState by viewModel.uiState.collectAsState()
-    PostNewEventBody(modifier = Modifier.padding(), uiState = uiState, viewModel = viewModel)
+    PostNewEventBody(
+        modifier = Modifier.padding(),
+        uiState = uiState,
+        viewModel = viewModel,
+        getEvents = getEvents
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PostNewEventScreenTopBar(modifier: Modifier = Modifier, onClickAction:()->Unit= {}) {
+fun PostNewEventScreenTopBar(modifier: Modifier = Modifier, onClickAction: () -> Unit = {}) {
     CenterAlignedTopAppBar(
         title = { Text("New Event") },
         navigationIcon = {
-            Icon(
-                imageVector = Icons.Default.Close,
-                contentDescription = "Close",
-                modifier = Modifier.clickable { onClickAction() })
+//            Icon(
+//                imageVector = Icons.Default.Close,
+//                contentDescription = "Close",
+//                modifier = Modifier.clickable { onClickAction() })
         }
     )
 }
@@ -97,7 +103,8 @@ fun PostNewEventScreenTopBar(modifier: Modifier = Modifier, onClickAction:()->Un
 fun PostNewEventBody(
     modifier: Modifier = Modifier,
     viewModel: PostNewEventViewModel = viewModel(),
-    uiState: PostNewEventUiState
+    uiState: PostNewEventUiState,
+    getEvents: () -> Unit = {}
 ) {
 
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
@@ -106,6 +113,7 @@ fun PostNewEventBody(
         contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri -> selectedImageUri = uri }
     )
+    val context = LocalContext.current
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -165,10 +173,10 @@ fun PostNewEventBody(
             singleLine = true,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
         )
-        var date by rememberSaveable { mutableStateOf("")}
+        var date by rememberSaveable { mutableStateOf("") }
         date = pickDate()
         viewModel.updateEventDate(date)
-        var time by rememberSaveable { mutableStateOf("")}
+        var time by rememberSaveable { mutableStateOf("") }
         time = timePickerDemo()
         val focusManager = LocalFocusManager.current
         viewModel.updateEventTime(time)
@@ -195,13 +203,17 @@ fun PostNewEventBody(
             },
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = {
-            focusManager.clearFocus()
+                focusManager.clearFocus()
             })
         )
         Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = { singleImagePickerLauncher.launch(PickVisualMediaRequest(
-            ActivityResultContracts.PickVisualMedia.ImageOnly
-        )) }) {
+        Button(onClick = {
+            singleImagePickerLauncher.launch(
+                PickVisualMediaRequest(
+                    ActivityResultContracts.PickVisualMedia.ImageOnly
+                )
+            )
+        }) {
             Text(text = "Add Image")
         }
         Spacer(modifier = Modifier.height(16.dp))
@@ -214,7 +226,15 @@ fun PostNewEventBody(
         )
         Spacer(modifier = Modifier.height(16.dp))
         Button(
-            onClick = { viewModel.addEventToDatabase() },
+            onClick = {
+                viewModel.addEventToDatabase(onSuccess = {
+                    Toast.makeText(
+                        context,
+                        "Event added successfully",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                })
+            },
             modifier = Modifier.fillMaxWidth(),
             shape = MaterialTheme.shapes.small,
             colors = ButtonDefaults.buttonColors(Color(13, 125, 242))
@@ -426,6 +446,6 @@ fun timePickerDemo(): String {
 @Composable
 fun PostNewEventPreview(modifier: Modifier = Modifier) {
     EventTrackerTheme {
-        PostNewEventScreen()
+        PostNewEventScreen(getEvents = {})
     }
 }

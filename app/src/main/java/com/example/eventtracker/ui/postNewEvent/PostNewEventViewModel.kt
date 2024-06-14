@@ -11,6 +11,7 @@ import androidx.lifecycle.ViewModel
 import com.example.eventtracker.model.EventData
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -26,7 +27,8 @@ import javax.inject.Inject
 @HiltViewModel
 class PostNewEventViewModel @Inject constructor(
     private val db: FirebaseFirestore,
-    private val storage: FirebaseStorage
+    private val storage: FirebaseStorage,
+    private val auth: FirebaseAuth
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(PostNewEventUiState())
     val uiState: StateFlow<PostNewEventUiState> = _uiState.asStateFlow()
@@ -76,7 +78,7 @@ class PostNewEventViewModel @Inject constructor(
         return ""
     }
 
-    fun addEventToDatabase() {
+    fun addEventToDatabase(onSuccess: () -> Unit) {
         val id = db.collection("events").document().id
         updateId(id)
         CoroutineScope(Dispatchers.Main).launch {
@@ -89,10 +91,13 @@ class PostNewEventViewModel @Inject constructor(
                 date = _uiState.value.eventDate,
                 time = _uiState.value.eventTime,
                 location = _uiState.value.location,
-                image = _uiState.value.eventImage
+                image = _uiState.value.eventImage,
+                userId = auth.currentUser?.uid.toString(),
+                eventId = id
             )
             Log.d("url update", "addEventToDatabase: $url")
             db.collection("events").document(id).set(event).addOnSuccessListener {
+                onSuccess()
                 Log.d(TAG, "addEventToDatabase: Suceess")
                 updateEventName("")
                 updateEventDescription("")
@@ -104,6 +109,16 @@ class PostNewEventViewModel @Inject constructor(
             }
                 .addOnFailureListener {
                     Log.d(TAG, "addEventToDatabase: Failed To Add Event`")
+                }
+            val userCollection = db.collection("users")
+            val userId = auth.currentUser?.uid
+            val userDocument = userId?.let { userCollection.document(it) }
+            val nestedCollection = userDocument?.collection("Hosted Events")
+            nestedCollection?.add(event)?.addOnSuccessListener { documentReference ->
+                Log.d(TAG, "addEventToDatabase: Hosted Event Added ${documentReference}")
+            }
+                ?.addOnFailureListener {
+                    Log.d(TAG, "addEventToDatabase: Failed To Add Hosted Event")
                 }
         }
     }

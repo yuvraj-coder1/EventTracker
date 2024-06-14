@@ -29,9 +29,12 @@ import com.example.eventtracker.ui.navigation.EventTrackerApp
 import com.example.eventtracker.ui.navigation.HomeScreen
 import com.example.eventtracker.ui.navigation.PostEventScreen
 import com.example.eventtracker.ui.navigation.ProfileScreen
+import com.example.eventtracker.ui.navigation.UserEventsScreen
 import com.example.eventtracker.ui.postNewEvent.PostNewEventScreenTopBar
 import com.example.eventtracker.ui.profile.ProfileScreenTopBar
+import com.example.eventtracker.ui.signIn.SignInViewModel
 import com.example.eventtracker.ui.theme.EventTrackerTheme
+import com.example.eventtracker.ui.userEventsScreen.UserEventsScreenTopBar
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -42,6 +45,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             EventTrackerTheme {
                 val homeScreenViewModel: HomeScreenViewModel = hiltViewModel()
+                val signInViewModel: SignInViewModel = hiltViewModel()
                 val navController = rememberNavController()
                 var buttonsVisible by remember { mutableStateOf(false) }
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -75,9 +79,10 @@ class MainActivity : ComponentActivity() {
 
                             eventDetailScreenPath -> EventDetailScreenTopBar()
                             pathString + PostEventScreen.toString() -> PostNewEventScreenTopBar(
-                                onClickAction = { navController.navigateUp() })
+                                onClickAction = { navController.navigate(HomeScreen)})
 
                             pathString + ProfileScreen.toString() -> ProfileScreenTopBar()
+                            pathString + UserEventsScreen.toString() -> UserEventsScreenTopBar()
                             else -> {
                                 Log.d("route", "I am here")
                                 //DO NOTHING
@@ -89,7 +94,8 @@ class MainActivity : ComponentActivity() {
                         navController = navController,
                         modifier = Modifier.padding(innerPadding),
                         onBottomBarVisibilityChanged = { buttonsVisible = it },
-                        homeScreenViewModel = homeScreenViewModel
+                        homeScreenViewModel = homeScreenViewModel,
+                        signInViewModel = signInViewModel
                     )
                 }
             }

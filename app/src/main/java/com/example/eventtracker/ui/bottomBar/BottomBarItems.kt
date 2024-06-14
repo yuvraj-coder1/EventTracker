@@ -2,6 +2,7 @@ package com.example.eventtracker.ui.bottomBar
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Message
 import androidx.compose.material.icons.filled.Person
@@ -31,4 +32,10 @@ sealed class BottomBarItem (
         icon = Icons.Default.Person,
         route = com.example.eventtracker.ui.navigation.ProfileScreen
     )
+    data object UserEventsScreen: BottomBarItem(
+        label = "User Events",
+        icon = Icons.Default.CalendarMonth,
+        route = com.example.eventtracker.ui.navigation.UserEventsScreen
+    )
+
 }

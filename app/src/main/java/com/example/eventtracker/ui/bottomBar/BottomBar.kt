@@ -24,7 +24,9 @@ fun BottomBar(
     val screens = listOf(
         BottomBarItem.HomeScreen,
         BottomBarItem.PostEventScreen,
+        BottomBarItem.UserEventsScreen,
         BottomBarItem.ProfileScreen,
+
     )
 
 
