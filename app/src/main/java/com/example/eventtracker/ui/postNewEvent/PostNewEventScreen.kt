@@ -246,6 +246,23 @@ fun PostNewEventBody(
 
 }
 
+fun getMonthName(month: Int): String {
+    return when (month) {
+        1 -> "Jan"
+        2 -> "Feb"
+        3 -> "Mar"
+        4 -> "Apr"
+        5 -> "May"
+        6 -> "Jun"
+        7 -> "Jul"
+        8 -> "Aug"
+        9 -> "Sep"
+        10 -> "Oct"
+        11 -> "Nov"
+        12 -> "Dec"
+        else -> ""
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -282,7 +299,7 @@ fun pickDate(): String {
         { _: DatePicker, mYear: Int, mMonth: Int, mDayOfMonth: Int ->
             //          mDate.value = "$mDayOfMonth/${mMonth+1}/$mYear"
             // year-month-day
-            mDate.value = "$mYear-${String.format("%02d", mMonth + 1)}-$mDayOfMonth"
+            mDate.value = "$mDayOfMonth ${getMonthName(mMonth + 1)} $mYear"
         }, mYear, mMonth, mDay
     )
 // correct code

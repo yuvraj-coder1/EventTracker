@@ -24,7 +24,7 @@ fun EventTrackerApp(
     navController: NavHostController,
     onBottomBarVisibilityChanged: (Boolean) -> Unit,
     homeScreenViewModel: HomeScreenViewModel,
-    signInViewModel: SignInViewModel
+    signInViewModel: SignInViewModel,
 ) {
     val scope = rememberCoroutineScope()
     NavHost(
@@ -36,7 +36,13 @@ fun EventTrackerApp(
             onBottomBarVisibilityChanged(false)
             SignInScreen(
                 viewModel = signInViewModel,
-                navigateToHome = { navController.navigate(HomeScreen) })
+                navigateToHome = {
+                    navController.navigate(HomeScreen) {
+                    popUpTo(LogInScreen) {
+                        inclusive = true
+                    }
+                    }
+                })
         }
 
         composable<HomeScreen> {
@@ -77,7 +83,10 @@ fun EventTrackerApp(
         }
         composable<ProfileScreen> {
             onBottomBarVisibilityChanged(true)
-            com.example.eventtracker.ui.profile.ProfileScreen(name = "Yash Aggarwal")
+            com.example.eventtracker.ui.profile.ProfileScreen(navigateToLogin = {
+                signInViewModel.signOut()
+                navController.navigate(LogInScreen)
+            })
         }
         composable<PostEventScreen> {
             onBottomBarVisibilityChanged(true)

@@ -23,7 +23,7 @@ class SignInViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(SignInUiState())
     val uiState:StateFlow<SignInUiState> = _uiState.asStateFlow()
     var inProcess by mutableStateOf(false)
-    var isSignedIn by mutableStateOf(false)
+
     var currentUser = auth.currentUser
     fun updateEmail(email:String){
         _uiState.value = _uiState.value.copy(email = email)
@@ -52,7 +52,7 @@ class SignInViewModel @Inject constructor(
             .addOnSuccessListener {
                 currentUser = auth.currentUser
                 inProcess = false
-                isSignedIn = true
+
                 onSuccess()
             }
             .addOnFailureListener{
@@ -94,5 +94,13 @@ class SignInViewModel @Inject constructor(
                 onFailure()
                 Log.d("Sign", "onSignUp: ${it.message}")
             }
+    }
+    fun checkIfLoggedIn():Boolean {
+        return currentUser != null
+    }
+
+    fun signOut(){
+        auth.signOut()
+        currentUser = null
     }
 }
