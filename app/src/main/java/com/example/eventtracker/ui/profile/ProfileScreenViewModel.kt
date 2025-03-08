@@ -16,7 +16,7 @@ import javax.inject.Inject
 @HiltViewModel
 class ProfileScreenViewModel @Inject constructor(
     private val auth: FirebaseAuth,
-    private val db: FirebaseFirestore
+    private val db: FirebaseFirestore,
 ) : ViewModel() {
     val currentUser = UserData()
     private val _userName = MutableStateFlow(currentUser.name)

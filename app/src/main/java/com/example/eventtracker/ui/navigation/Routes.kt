@@ -16,6 +16,7 @@ data class EventDetailsScreen(
     val location:String = "",
     val description:String = "",
     val category:String = "",
+    val eventLink:String = ""
 )
 
 @Serializable

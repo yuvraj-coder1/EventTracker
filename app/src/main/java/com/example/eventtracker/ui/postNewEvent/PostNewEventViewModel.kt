@@ -62,6 +62,10 @@ class PostNewEventViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(id = id)
     }
 
+    fun updateEventLink(eventLink:String){
+        _uiState.value = _uiState.value.copy(eventLink = eventLink)
+    }
+
     private suspend fun uploadEventImage(eventImageUri: Uri?): String {
         val storageRef = storage.reference.child("images/${_uiState.value.id}")
         if (eventImageUri != null) {
@@ -93,7 +97,8 @@ class PostNewEventViewModel @Inject constructor(
                 location = _uiState.value.location,
                 image = _uiState.value.eventImage,
                 userId = auth.currentUser?.uid.toString(),
-                eventId = id
+                eventId = id,
+                eventLink = _uiState.value.eventLink
             )
             Log.d("url update", "addEventToDatabase: $url")
             db.collection("events").document(id).set(event).addOnSuccessListener {
@@ -105,6 +110,7 @@ class PostNewEventViewModel @Inject constructor(
                 updateEventDate("")
                 updateEventTime("")
                 updateLocation("")
+                updateEventLink("")
                 uri = null
             }
                 .addOnFailureListener {
@@ -133,4 +139,5 @@ data class PostNewEventUiState(
     val eventTime: String = "",
     val location: String = "",
     val eventImage: String = "",
+    val eventLink:String =""
 )

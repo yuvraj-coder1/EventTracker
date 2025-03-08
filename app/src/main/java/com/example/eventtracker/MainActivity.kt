@@ -50,12 +50,14 @@ class MainActivity : ComponentActivity() {
                 var buttonsVisible by remember { mutableStateOf(false) }
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val pathString = "com.example.eventtracker.ui.navigation."
+                val homeScreenPath = pathString + HomeScreen.toString()
+                Log.d("route", navBackStackEntry?.destination?.route.toString())
                 val eventDetailScreenPath =
                     "com.example.eventtracker.ui.navigation." +
                             "EventDetailsScreen?name={name}&image={image}&" +
                             "date={date}&time={time}&location={location}&description" +
                             "={description}&category={category}"
-                Log.d("route", navBackStackEntry?.destination?.route.toString())
+
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     bottomBar = {

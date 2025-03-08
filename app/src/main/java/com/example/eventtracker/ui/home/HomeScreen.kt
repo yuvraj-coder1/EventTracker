@@ -224,7 +224,7 @@ fun EventListItem(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = eventLocation)
+        Text(text = eventLocation, modifier = Modifier.weight(0.7f))
         Button(
             onClick =
             {
@@ -244,7 +244,8 @@ fun EventListItem(
                         192,
                         70
                     ) else Color.Unspecified
-            )
+            ),
+
         ) {
 
             Text(

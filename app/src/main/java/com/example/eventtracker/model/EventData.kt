@@ -9,7 +9,8 @@ data class EventData(
     val description:String = "THis is the description of the event",
     val category:String = "Technical",
     val userId:String = "",
-    val eventId:String = ""
+    val eventId:String = "",
+    val eventLink:String =""
 ) {
     fun doesMatchSearchQuery(query: String):Boolean {
         return name.contains(query, ignoreCase = true)

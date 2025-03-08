@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
@@ -71,7 +72,7 @@ class HomeScreenViewModel @Inject constructor(
             SharingStarted.WhileSubscribed(5000), _eventList.value
         )
 
-    fun getEvents() {
+     fun getEvents() {
         eventListener = db.collection("events").addSnapshotListener { value, error ->
             if (error != null) {
                 Log.d("TAG", "populateMessages: $error")
@@ -108,7 +109,8 @@ class HomeScreenViewModel @Inject constructor(
     }
 
     init {
-        getEvents()
+
+            getEvents()
     }
 
 //   suspend fun onInterestedClicked(event: EventData, isBookmarked: Boolean):Boolean {

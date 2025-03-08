@@ -58,7 +58,8 @@ fun EventTrackerApp(
                             location = it.location,
                             time = it.time,
                             image = it.image,
-                            category = it.category
+                            category = it.category,
+                            eventLink = it.eventLink
                         )
                     )
                 },
@@ -75,10 +76,12 @@ fun EventTrackerApp(
                 location = args.location,
                 time = args.time,
                 image = args.image,
-                category = args.category
+                category = args.category,
+                eventLink = args.eventLink
             )
             EventDetailScreen(
                 event = event,
+                viewModel = homeScreenViewModel
             )
         }
         composable<ProfileScreen> {

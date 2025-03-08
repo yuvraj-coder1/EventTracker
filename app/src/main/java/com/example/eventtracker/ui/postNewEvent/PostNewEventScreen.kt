@@ -173,6 +173,24 @@ fun PostNewEventBody(
             singleLine = true,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
         )
+        OutlinedTextField(
+            value = uiState.eventLink,
+            onValueChange = { viewModel.updateEventLink(it) },
+            shape = RoundedCornerShape(8.dp),
+            label = { Text("Event Register Link", color = Color.Gray) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Color.Black,
+                unfocusedBorderColor = Color.Transparent,
+                unfocusedContainerColor = Color(176, 183, 192, 70),
+                focusedContainerColor = Color(176, 183, 192, 70),
+
+                ),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
+        )
         var date by rememberSaveable { mutableStateOf("") }
         date = pickDate()
         viewModel.updateEventDate(date)
