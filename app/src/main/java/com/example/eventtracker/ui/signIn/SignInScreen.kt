@@ -1,7 +1,9 @@
 package com.example.eventtracker.ui.signIn
 
+import android.os.Build
 import android.util.Log
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -55,6 +57,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.eventtracker.R
 import com.example.eventtracker.ui.theme.EventTrackerTheme
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun SignInScreen(
     modifier: Modifier = Modifier,
@@ -64,10 +67,10 @@ fun SignInScreen(
     navigateToSignIn: () -> Unit = {},
 ) {
     LaunchedEffect(Unit) {
-        if(viewModel.checkIfLoggedIn()){
-            navigateToHome()
-            Log.d("TAG", "SignInScreen: ${viewModel.checkIfLoggedIn()}")
-        }
+//        if(viewModel.checkIfLoggedIn()){
+//            navigateToHome()
+//            Log.d("TAG", "SignInScreen: ${viewModel.checkIfLoggedIn()}")
+//        }
     }
 
     val context = LocalContext.current
@@ -77,8 +80,8 @@ fun SignInScreen(
         modifier = Modifier.padding(16.dp),
         onSignIn =
         {
-            if (uiState.email.isEmpty() || uiState.password.isEmpty()) {
-                Toast.makeText(context, "Please enter email and password", Toast.LENGTH_SHORT)
+            if (uiState.username.isEmpty() || uiState.password.isEmpty()) {
+                Toast.makeText(context, "Please enter username and password", Toast.LENGTH_SHORT)
                     .show()
             } else {
                 viewModel.signIn(
@@ -210,13 +213,13 @@ fun SignInScreenContent(
             Spacer(modifier = Modifier.height(10.dp))
         }
         OutlinedTextField(
-            value = uiState.email,
-            onValueChange = { viewModel.updateEmail(it) },
-            label = { Text(text = "Email") },
+            value = uiState.username,
+            onValueChange = { viewModel.updateName(it) },
+            label = { Text(text = "Username") },
             leadingIcon = {
                 Icon(
-                    imageVector = Icons.Outlined.Mail,
-                    contentDescription = "email"
+                    imageVector = Icons.Outlined.Person,
+                    contentDescription = "username"
                 )
             },
             modifier = Modifier.fillMaxWidth(),

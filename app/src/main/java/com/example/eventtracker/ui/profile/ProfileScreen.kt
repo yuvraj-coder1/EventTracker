@@ -65,7 +65,6 @@ fun ProfileScreen(modifier: Modifier = Modifier,navigateToLogin: () -> Unit) {
             fontWeight = FontWeight.Bold,
             style = MaterialTheme.typography.titleLarge
         )
-
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = "USN - ${viewModel.userUsn.collectAsState().value}",
@@ -74,13 +73,7 @@ fun ProfileScreen(modifier: Modifier = Modifier,navigateToLogin: () -> Unit) {
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = "Branch - ISE",
-            style = MaterialTheme.typography.bodyLarge,
-            color = Color.Gray
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = "Section - E",
+            text = "email - ${viewModel.userEmail.collectAsState().value}",
             style = MaterialTheme.typography.bodyLarge,
             color = Color.Gray
         )
@@ -116,12 +109,6 @@ fun EventList(modifier: Modifier = Modifier, events: List<EventData>) {
             EventItem(event = event)
         }
     }
-//    EventItem(eventName = "Introduction to Android Development")
-//    EventItem(eventName = "Introduction to Android Development")
-//    EventItem(eventName = "Introduction to Android Development")
-//    EventItem(eventName = "Introduction to Android Development")
-//    EventItem(eventName = "Introduction to Android Development")
-
 }
 
 @Composable

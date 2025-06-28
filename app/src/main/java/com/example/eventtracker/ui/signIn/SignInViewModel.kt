@@ -1,11 +1,20 @@
 package com.example.eventtracker.ui.signIn
 
+import android.content.SharedPreferences
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.security.crypto.EncryptedSharedPreferences
+import com.example.eventtracker.data.login.NetworkLogInRepository
+import com.example.eventtracker.model.SignUpResponse
 import com.example.eventtracker.model.UserData
+import com.example.eventtracker.model.UserLogInResponse
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -13,94 +22,109 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
+import androidx.core.content.edit
 
 @HiltViewModel
 class SignInViewModel @Inject constructor(
-    private val auth: FirebaseAuth,
-    private val db: FirebaseFirestore
-) :ViewModel() {
+    private val loginRepository: NetworkLogInRepository,
+    private val encryptedSharedPreferences: SharedPreferences
+) : ViewModel() {
     private val _uiState = MutableStateFlow(SignInUiState())
-    val uiState:StateFlow<SignInUiState> = _uiState.asStateFlow()
+    val uiState: StateFlow<SignInUiState> = _uiState.asStateFlow()
     var inProcess by mutableStateOf(false)
-
-    var currentUser = auth.currentUser
-    fun updateEmail(email:String){
+    fun updateEmail(email: String) {
         _uiState.value = _uiState.value.copy(email = email)
     }
-    fun updatePassword(password:String){
+
+    fun updatePassword(password: String) {
         _uiState.value = _uiState.value.copy(password = password)
     }
-    fun updateConfirmPassword(confirmPassword:String){
+
+    fun updateConfirmPassword(confirmPassword: String) {
         _uiState.value = _uiState.value.copy(confirmPassword = confirmPassword)
     }
-    fun updateName(name:String){
+
+    fun updateName(name: String) {
         _uiState.value = _uiState.value.copy(username = name)
     }
-    fun updateIsSignIn(isSignIn:Boolean){
+
+    fun updateIsSignIn(isSignIn: Boolean) {
         _uiState.value = _uiState.value.copy(isSignIn = isSignIn)
     }
-    fun updateCollegeId(collegeId:String){
+
+    fun updateCollegeId(collegeId: String) {
         _uiState.value = _uiState.value.copy(collegeId = collegeId)
     }
+
     fun signIn(
-        onSuccess:()->Unit,
-        onFailure:()->Unit
-    ){
-        inProcess = true
-        auth.signInWithEmailAndPassword(uiState.value.email,uiState.value.password)
-            .addOnSuccessListener {
-                currentUser = auth.currentUser
-                inProcess = false
-
-                onSuccess()
-            }
-            .addOnFailureListener{
-                inProcess = false
+        onSuccess: () -> Unit,
+        onFailure: () -> Unit
+    ) {
+        viewModelScope.launch {
+            inProcess = true
+            try {
+                val response: UserLogInResponse = loginRepository.signInUser(
+                    username = uiState.value.username,
+                    password = uiState.value.password
+                )
+                if (response.success) {
+                    encryptedSharedPreferences.edit() { putString("jwt", response.data.jwt) }
+                    encryptedSharedPreferences.edit() { putString("refreshToken", response.data.refreshToken) }
+                    encryptedSharedPreferences.edit() { putString("userId", response.data.userId) }
+                    Log.d("jwt", "signIn: ${response.data.jwt}")
+                    onSuccess()
+                } else {
+                    onFailure()
+                }
+            } catch (
+                e: Exception
+            ) {
+                Log.e("SignIn", e.message.toString())
                 onFailure()
+            } finally {
+                inProcess = false
             }
+        }
     }
+
+    @RequiresApi(Build.VERSION_CODES.O)
     fun signUp(
-        onSuccess:()->Unit,
-        onFailure:()->Unit
-    ){
-        if(uiState.value.password != uiState.value.confirmPassword)
+        onSuccess: () -> Unit,
+        onFailure: () -> Unit
+    ) {
+        if (uiState.value.password != uiState.value.confirmPassword)
             return
-        auth.createUserWithEmailAndPassword(uiState.value.email,uiState.value.password)
-            .addOnSuccessListener {result ->
-                val user: UserData? = result.user?.uid?.let {
-                    UserData(
-                        name = uiState.value.username,
-                        email = uiState.value.email,
-                        collegeId = uiState.value.collegeId,
-                        password = uiState.value.password,
-                        id = it,
-                    )
+        viewModelScope.launch {
+            inProcess = true
+            try {
+                val response: SignUpResponse = loginRepository.signUpUser(
+                    username = uiState.value.username,
+                    password = uiState.value.password,
+                    collegeId = uiState.value.collegeId,
+                    email = uiState.value.email
+                )
+                if (response.success) {
+                    onSuccess()
+                } else {
+                    onFailure()
                 }
-                if (user != null) {
-                    db.collection("users").document(user.id).set(user)
-                        .addOnSuccessListener {
-                            onSuccess()
-                            Log.d("Sign", "onSignUp: Success")
-                            _uiState.update { it.copy(isSignIn = true) }
-                        }
-                        .addOnFailureListener {
-                            onFailure()
-                            Log.d("Sign", "onSignUp: ${it.message}")
-                        }
-                }
-            }
-            .addOnFailureListener {
+            } catch (e: Exception) {
+                Log.e("SignUp", e.message.toString())
                 onFailure()
-                Log.d("Sign", "onSignUp: ${it.message}")
+            } finally {
+                inProcess = false
             }
-    }
-    fun checkIfLoggedIn():Boolean {
-        return currentUser != null
-    }
 
-    fun signOut(){
-        auth.signOut()
-        currentUser = null
+        }
+    }
+    fun signOut() {
+        encryptedSharedPreferences.edit() { putString("jwt", null) }
+        encryptedSharedPreferences.edit() { putString("refreshToken", null) }
+        encryptedSharedPreferences.edit() { putString("userId", null) }
+    }
+    fun isUserLoggedIn(): Boolean {
+        return !encryptedSharedPreferences.getString("refreshToken",null).isNullOrEmpty()
     }
 }

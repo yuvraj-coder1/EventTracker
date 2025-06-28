@@ -81,7 +81,6 @@ fun PostNewEventScreen(modifier: Modifier = Modifier, getEvents: () -> Unit) {
         modifier = Modifier.padding(),
         uiState = uiState,
         viewModel = viewModel,
-        getEvents = getEvents
     )
 }
 
@@ -104,7 +103,6 @@ fun PostNewEventBody(
     modifier: Modifier = Modifier,
     viewModel: PostNewEventViewModel = viewModel(),
     uiState: PostNewEventUiState,
-    getEvents: () -> Unit = {}
 ) {
 
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
@@ -251,7 +249,15 @@ fun PostNewEventBody(
                         "Event added successfully",
                         Toast.LENGTH_SHORT
                     ).show()
-                })
+                },
+                    onFail = {
+                        Toast.makeText(
+                            context,
+                            "Event not added Please try again",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                    )
             },
             modifier = Modifier.fillMaxWidth(),
             shape = MaterialTheme.shapes.small,

@@ -1,6 +1,10 @@
 package com.example.eventtracker.ui.navigation
 
+import android.content.SharedPreferences
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
@@ -17,7 +21,10 @@ import com.example.eventtracker.ui.profile.ProfileScreen
 import com.example.eventtracker.ui.signIn.SignInScreen
 import com.example.eventtracker.ui.signIn.SignInViewModel
 import com.example.eventtracker.ui.userEventsScreen.UserEventsScreen
+import com.example.eventtracker.utils
+import retrofit2.http.Field
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun EventTrackerApp(
     modifier: Modifier = Modifier,
@@ -26,10 +33,16 @@ fun EventTrackerApp(
     homeScreenViewModel: HomeScreenViewModel,
     signInViewModel: SignInViewModel,
 ) {
+    utils.logOutUser.observeForever {
+        if(it) {
+            signInViewModel.signOut()
+            navController.navigate(LogInScreen)
+        }
+    }
     val scope = rememberCoroutineScope()
     NavHost(
         navController = navController,
-        startDestination = LogInScreen,
+        startDestination = startScreen(signInViewModel),
         modifier = modifier
     ) {
         composable<LogInScreen> {
@@ -46,9 +59,11 @@ fun EventTrackerApp(
         }
 
         composable<HomeScreen> {
+            homeScreenViewModel.getEvents()
+//            homeScreenViewModel.getBookmarkedEvents()
+//            homeScreenViewModel.getUserEvents()
             onBottomBarVisibilityChanged(true)
             com.example.eventtracker.ui.home.HomeScreen(
-
                 onEventClick = {
                     navController.navigate(
                         EventDetailsScreen(
@@ -59,7 +74,9 @@ fun EventTrackerApp(
                             time = it.time,
                             image = it.image,
                             category = it.category,
-                            eventLink = it.eventLink
+                            eventLink = it.eventLink,
+                            eventId = it.eventId,
+                            eventImageUrl = it.eventImageUrl
                         )
                     )
                 },
@@ -77,7 +94,9 @@ fun EventTrackerApp(
                 time = args.time,
                 image = args.image,
                 category = args.category,
-                eventLink = args.eventLink
+                eventLink = args.eventLink,
+                eventId = args.eventId,
+                eventImageUrl = args.eventImageUrl
             )
             EventDetailScreen(
                 event = event,
@@ -108,12 +127,22 @@ fun EventTrackerApp(
                             location = it.location,
                             time = it.time,
                             image = it.image,
-                            category = it.category
+                            category = it.category,
+                            eventLink = it.eventLink,
+                            eventId = it.eventId
                         )
                     )
                 },
+                bookmarkedEvents = homeScreenViewModel.bookmarkedEvents.collectAsState().value,
+                hostedEvents = homeScreenViewModel.hostedEvents.collectAsState().value
             )
         }
 
     }
+}
+fun startScreen(signInViewModel: SignInViewModel): Any {
+    if(signInViewModel.isUserLoggedIn())
+        return HomeScreen
+    else
+        return LogInScreen
 }

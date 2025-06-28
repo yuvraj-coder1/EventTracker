@@ -43,30 +43,38 @@ import com.example.eventtracker.R
 import com.example.eventtracker.model.EventData
 
 @Composable
-fun UserEventsScreen(modifier: Modifier = Modifier,onEventClick: (EventData) -> Unit) {
+fun UserEventsScreen(
+    modifier: Modifier = Modifier,
+    onEventClick: (EventData) -> Unit,
+    bookmarkedEvents: List<EventData> = emptyList<EventData>(),
+    hostedEvents: List<EventData> = emptyList<EventData>()
+) {
     val viewModel: UserEventsScreenViewModel = hiltViewModel()
     val uiState by viewModel.uiState.collectAsState()
     Column(
         modifier = modifier,
-        ) {
+    ) {
         EventsToShow(
             isBookmarksSelected = uiState.isBookmarksSelected,
             onClick = { viewModel.updateIsBookmarkedSelected(it) })
         Spacer(modifier = Modifier.height(16.dp))
         EventList(
             eventList = if (uiState.isBookmarksSelected)
-                uiState.bookmarkedEvents else
-                uiState.hostedEvents,
+                bookmarkedEvents else
+                hostedEvents,
             onEventClick = onEventClick
         )
     }
 }
 
 @Composable
-fun EventList(modifier: Modifier = Modifier, eventList: List<EventData> = emptyList(),onEventClick: (EventData) -> Unit) {
+fun EventList(
+    modifier: Modifier = Modifier,
+    eventList: List<EventData> = emptyList(),
+    onEventClick: (EventData) -> Unit
+) {
     LazyColumn {
-        itemsIndexed(eventList) {
-                _, item ->
+        itemsIndexed(eventList) { _, item ->
             EventListItem(
                 eventTitle = item.name,
                 eventImage = item.image,
@@ -89,7 +97,12 @@ fun EventListItem(
     onEventClick: (EventData) -> Unit = {},
     event: EventData
 ) {
-    Row(modifier = modifier.padding(12.dp).clickable { onEventClick(event) }, verticalAlignment = Alignment.CenterVertically) {
+    Row(
+        modifier = modifier
+            .padding(12.dp)
+            .clickable { onEventClick(event) },
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         AsyncImage(
             model = eventImage,
             error = painterResource(id = R.drawable.default_image),
@@ -125,8 +138,20 @@ fun EventsToShow(
 ) {
     val bookmarkWeight by animateFloatAsState(if (isBookmarksSelected) 1.4f else 1f)
     val hostedWeight by animateFloatAsState(if (isBookmarksSelected) 1f else 1.4f)
-    val bookmarkColor by animateColorAsState(if (isBookmarksSelected) Color.White else Color(240, 242, 245))
-    val hostedColor by animateColorAsState(if (!isBookmarksSelected) Color.White else Color(240, 242, 245))
+    val bookmarkColor by animateColorAsState(
+        if (isBookmarksSelected) Color.White else Color(
+            240,
+            242,
+            245
+        )
+    )
+    val hostedColor by animateColorAsState(
+        if (!isBookmarksSelected) Color.White else Color(
+            240,
+            242,
+            245
+        )
+    )
     val bookmarkElevation by animateDpAsState(if (isBookmarksSelected) 4.dp else 0.dp)
     val hostedElevation by animateDpAsState(if (!isBookmarksSelected) 4.dp else 0.dp)
     val bookmarkTextColor by animateColorAsState(if (isBookmarksSelected) Color.Black else Color.Gray)

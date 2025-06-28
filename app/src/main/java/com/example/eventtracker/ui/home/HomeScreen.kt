@@ -1,6 +1,7 @@
 package com.example.eventtracker.ui.home
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.VectorConverter
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -80,11 +81,12 @@ fun HomeScreenTopBar(
     if (isSearchOn.value) {
         CenterAlignedTopAppBar(
             title = {
-                TextField(value = searchQuery.value, onValueChange = {
-                    viewModel.updateSearchQuery(
-                        it
-                    )
-                }, modifier = Modifier.fillMaxWidth(),
+                TextField(
+                    value = searchQuery.value, onValueChange = {
+                        viewModel.updateSearchQuery(
+                            it
+                        )
+                    }, modifier = Modifier.fillMaxWidth(),
                     placeholder = { Text(text = "Search events") },
                     singleLine = true,
                     trailingIcon = {
@@ -127,6 +129,7 @@ fun HomeBody(
     viewModel: HomeScreenViewModel,
     onEventClick: (EventData) -> Unit
 ) {
+
     Column(modifier = modifier.padding(horizontal = 16.dp)) {
 
         if (viewModel.isSearchOn.collectAsState().value)
@@ -150,7 +153,8 @@ fun HomeBody(
                 eventList = viewModel.eventList.collectAsState().value,
                 onEventClick = onEventClick,
                 onInterestedAction = viewModel::onInterestedClicked,
-                checkIfBookmarked = viewModel::checkIfBookmarked
+                checkIfBookmarked = viewModel::checkIfBookmarked,
+                viewModel = viewModel
             )
         }
 
@@ -162,8 +166,9 @@ fun EventList(
     modifier: Modifier = Modifier,
     eventList: List<EventData>,
     onEventClick: (EventData) -> Unit,
-    onInterestedAction: suspend (EventData, Boolean) -> Boolean,
-    checkIfBookmarked: (event: EventData) -> Boolean
+    onInterestedAction: suspend (EventData, onSuccess: () -> Unit, onFailure: () -> Unit) -> Unit,
+    checkIfBookmarked: (event: EventData) -> Boolean,
+    viewModel: HomeScreenViewModel
 ) {
     LazyColumn(modifier = modifier) {
         itemsIndexed(eventList) { index, item ->
@@ -180,7 +185,8 @@ fun EventList(
                 onClickAction = onEventClick,
                 event = item,
                 onInterestedAction = onInterestedAction,
-                checkIfBookmarked = checkIfBookmarked
+                checkIfBookmarked = checkIfBookmarked,
+                viewModel = viewModel
             )
         }
     }
@@ -196,15 +202,19 @@ fun EventListItem(
     onClickAction: (EventData) -> Unit = {},
     eventTime: String,
     eventLocation: String,
-    onInterestedAction: suspend (EventData, Boolean) -> Boolean,
+    onInterestedAction: suspend (EventData,() -> Unit, () -> Unit) -> Unit,
     event: EventData,
+    viewModel: HomeScreenViewModel,
+
     checkIfBookmarked: (event: EventData) -> Boolean = { false }
 ) {
-    var isBookmarked by rememberSaveable { mutableStateOf(checkIfBookmarked(event)) }
+    val bookmarked = viewModel.bookmarkedEvents.collectAsState()
+    val isBookmarked = bookmarked.value.any { it.eventId == event.eventId }
+    val context = LocalContext.current
 //    isBookmarked = checkIfBookmarked(event)
     Column(modifier = modifier.clickable { onClickAction(event) }) {
         AsyncImage(
-            model = eventImage,
+            model = event.eventImageUrl,
             error = painterResource(id = R.drawable.default_image),
             contentDescription = "Event Image",
             contentScale = ContentScale.Crop,
@@ -227,14 +237,29 @@ fun EventListItem(
         Text(text = eventLocation, modifier = Modifier.weight(0.7f))
         Button(
             onClick =
-            {
-                CoroutineScope(Dispatchers.IO).launch {
-                    isBookmarked =  onInterestedAction(event, isBookmarked)
-                }
+                {
+                    CoroutineScope(Dispatchers.IO).launch {
+                        viewModel.onInterestedClicked(
+                            event,
+                            onSuccess = {
+                                Toast.makeText(
+                                    context,
+                                    "Event Bookmarked",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }, onFailure = {
+                                Toast.makeText(
+                                    context,
+                                    "Event UnBookmarked",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        )
+                    }
                     // Update state after Firebase task}
                     //               isBookmarked =  onInterestedAction(event, isBookmarked)
                     //                Log.d("isBookmarked", isBookmarked.toString())
-            },
+                },
 
             colors = ButtonDefaults.buttonColors(
                 if (isBookmarked)
@@ -246,7 +271,7 @@ fun EventListItem(
                     ) else Color.Unspecified
             ),
 
-        ) {
+            ) {
 
             Text(
                 text = if (isBookmarked) "Unbookmark" else "Bookmark",

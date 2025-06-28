@@ -2,6 +2,7 @@ package com.example.eventtracker.ui.home
 
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -32,6 +33,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -103,7 +106,7 @@ fun EventDetailScreenContent(
             .verticalScroll(rememberScrollState())
     ) {
         AsyncImage(
-            model = event.image,
+            model = event.eventImageUrl,
             error = painterResource(id = R.drawable.default_image),
             contentDescription = null,
             modifier = Modifier.fillMaxWidth(),
@@ -113,9 +116,8 @@ fun EventDetailScreenContent(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            var isBookmarked by rememberSaveable {
-                mutableStateOf(viewModel.checkIfBookmarked(event))
-            }
+            val bookmarked = viewModel.bookmarkedEvents.collectAsState()
+            val isBookmarked = bookmarked.value.any { it.eventId == event.eventId }
             Text(
                 text = event.name,
                 fontWeight = FontWeight.Bold,
@@ -138,7 +140,6 @@ fun EventDetailScreenContent(
                         .padding(4.dp)
 
                 )
-
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(text = event.location, modifier = Modifier.weight(1f))
             }
@@ -150,7 +151,19 @@ fun EventDetailScreenContent(
                 Button(
                     onClick = {
                         CoroutineScope(Dispatchers.IO).launch {
-                            isBookmarked = viewModel.onInterestedClicked(event, isBookmarked)
+                            viewModel.onInterestedClicked(event, onSuccess = {
+                                Toast.makeText(
+                                    context,
+                                    "Event Bookmarked",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }, onFailure = {
+                                Toast.makeText(
+                                    context,
+                                    "Failed try again later",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            })
                         }
                     },
                     modifier = Modifier.weight(1f),
@@ -174,12 +187,21 @@ fun EventDetailScreenContent(
                 }
                 Button(
                     onClick = {
-                        val intent = Intent(Intent.ACTION_VIEW, event.eventLink.toUri())
-                        startActivity(
-                            context,
-                            intent,
-                            null
-                        )
+                        if (event.eventLink.isNotEmpty()) {
+                            val link = if (event.eventLink.startsWith("http")) {
+                                event.eventLink
+                            } else {
+                                "https://${event.eventLink}"
+                            }
+                            val intent = Intent(Intent.ACTION_VIEW, link.toUri())
+                            startActivity(
+                                context,
+                                intent,
+                                null
+                            )
+                        } else {
+                            Toast.makeText(context, "No link found", Toast.LENGTH_SHORT).show()
+                        }
                     },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(Color(13, 125, 242))

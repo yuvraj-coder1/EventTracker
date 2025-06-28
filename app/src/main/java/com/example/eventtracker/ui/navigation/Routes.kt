@@ -1,5 +1,6 @@
 package com.example.eventtracker.ui.navigation
 
+import android.annotation.SuppressLint
 import kotlinx.serialization.Serializable
 import com.example.eventtracker.model.EventData
 import kotlinx.serialization.Contextual
@@ -7,6 +8,7 @@ import kotlinx.serialization.Contextual
 @Serializable
 data object HomeScreen
 
+@SuppressLint("UnsafeOptInUsageError")
 @Serializable
 data class EventDetailsScreen(
     val name:String="",
@@ -16,7 +18,9 @@ data class EventDetailsScreen(
     val location:String = "",
     val description:String = "",
     val category:String = "",
-    val eventLink:String = ""
+    val eventLink:String = "",
+    val eventId:String = "",
+    val eventImageUrl:String = ""
 )
 
 @Serializable
