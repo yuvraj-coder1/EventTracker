@@ -15,13 +15,7 @@ Event Tracker is a user-friendly app designed to help individuals discover, mana
 ## Technologies Used
 - **Kotlin:** For building a robust Android application with excellent performance and stability.
 - **Jetpack Compose:** To create modern, responsive, and visually appealing user interfaces.
-- **Firebase:** For backend services such as authentication, real-time database management, and cloud storage.
-
-
-## Technologies Used
-- **Kotlin:** For robust Android application development, enhancing app stability and performance.
-- **Jetpack Compose:** To design modern, reactive UIs that are responsive and intuitive.
-- **Firebase:** For backend services such as authentication, database management, and cloud storage.
+- **SpringBoot:** For backend services such as authentication, real-time database management, and cloud storage.
 
 ## Demo-Video
 [https://youtu.be/i6nAK03j8w8?si=yLfDeuTRFHS_z03o](https://github.com/yuvraj-coder1/EventTracker/assets/142040957/377dbac7-74c4-4059-8006-6b2ed5f32989)
